@@ -1,0 +1,42 @@
+FROM hostname.lan.home:65432/ubuntu:jammy
+LABEL maintainer littlewing
+ARG REPOSITORY="jvde-github"
+ARG PROJECT="AIS-catcher"
+ARG BRANCH="main"
+
+
+RUN apt update && \
+ apt upgrade --assume-yes && \
+ apt install --no-install-recommends --assume-yes \
+  ca-certificates \
+  git-core \
+  build-essential \
+  make \
+  gcc \
+  g++ \
+  pkg-config \
+  librtlsdr-dev \
+  libairspyhf-dev \
+  libairspy-dev
+
+RUN git clone --depth 1 --branch ${BRANCH} "https://github.com/${REPOSITORY}/${PROJECT}.git"
+
+WORKDIR /${PROJECT}
+RUN make
+RUN make install
+WORKDIR /
+RUN rm -rf /${PROJECT}
+
+RUN apt autoremove --purge --assume-yes \
+  git-core \
+  build-essential \
+  make \
+  gcc \
+  g++ \
+  pkg-config
+RUN rm -rf /var/lib/apt/lists/*
+
+
+VOLUME ["/var/log", "/etc/localtime:ro"]
+ENTRYPOINT ["AIS-catcher"]
+CMD ["-h"]
